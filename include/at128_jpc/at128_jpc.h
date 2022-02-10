@@ -10,7 +10,7 @@ typedef pcl::PointXYZITR Point;
 
 extern int radial_index;
 const std::string pts_topic = "/hesai/pandar_points";
-const int horizon_pts_num = 1281, scan_num = 128, neighbor_num = 24, s = 5;
+const int horizon_pts_num = 1281, scan_num = 128, neighbor_num = 25, s = 5;
 const float th_g = 0.2, sigma = 10., delta_R = 2., th_d = 1., max_range = 70, min_range = 2;
 const int radial_num = int((max_range - min_range)/delta_R);
 const Eigen::Vector3d lidar_pos{5.4, -0.2, 3.2};
