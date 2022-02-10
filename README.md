@@ -13,6 +13,7 @@ bag包百度云下载地址：https://pan.baidu.com/s/19pUUNX0xZJi4spdRDnJXPA?pw
 
 第一个终端：
 source devel/setup.bash
+
 rosrun at128_jpc at128_jpc
 
 第二个终端:
