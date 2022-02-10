@@ -42,7 +42,7 @@ void ProjectionJpc::memAllocation()
     region_minz.assign(radial_num * horizon_pts_num, 100);
 	cloud_index.assign(scan_num * horizon_pts_num, -1);
 	
-	neighborIterator.resize(neighbor_num);
+	neighborIterator.reserve(neighbor_num);
     for(int i = -2; i <= 2; ++i)
     {
         for(int j = -2; j <= 2; ++j)
