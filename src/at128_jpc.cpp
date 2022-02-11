@@ -69,7 +69,7 @@ void ProjectionJpc::mapMake()
             {
                 continue;
             }
-            row_i = pt.ring;
+            row_i = 128 - pt.ring;
             if(atan2(pt.y, pt.x) >= 0)
                 col_i = ((128.1/2) - atan2(pt.y, pt.x) * RAD) / 0.1;
             else
@@ -111,7 +111,7 @@ void ProjectionJpc::RECM()
         }
         else
         {
-            region_minz[i] = min(region_minz[i], region_minz[i-1] + (float)delta_R * tan(sigma));
+            region_minz[i] = min(region_minz[i], region_minz[i-1] + (float)(delta_R * tan(sigma / RAD)));
         }
     }
     //遍历点，如果z值大于对应块内的minz,就判定为障碍点
