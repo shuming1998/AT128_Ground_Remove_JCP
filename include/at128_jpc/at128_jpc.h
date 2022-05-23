@@ -30,11 +30,11 @@ public:
     void setParams();
     void memAllocation();
     void mapMake();
- 	void RECM();
-	void JPC();
-	void ptsPub();
-	void runProject(const sensor_msgs::PointCloud2ConstPtr& pts_msg);
-	void pts_trans(PointType::Ptr untrans_pts);
+    void RECM();
+    void JPC();
+    void ptsPub();
+    void runProject(const sensor_msgs::PointCloud2ConstPtr& pts_msg);
+    void pts_trans(PointType::Ptr untrans_pts);
 
 private:
     std_msgs::Header pts_header;
@@ -53,13 +53,13 @@ private:
     ros::Publisher pub_pts_obstacle;
     
     std::vector<float> region_minz;
-	std::vector<int> cloud_index;
+    std::vector<int> cloud_index;
     std::vector<std::pair<int, int> > neighborIterator;
     	
-	cv::Mat range_image;
-	cv::Mat region_image;
+    cv::Mat range_image;
+    cv::Mat region_image;
 	
-	Eigen::AngleAxisd rollAngle;
+    Eigen::AngleAxisd rollAngle;
     Eigen::AngleAxisd pitchAngle;
     Eigen::AngleAxisd yawAngle;
     Eigen::Matrix3d rotation_matrix;
