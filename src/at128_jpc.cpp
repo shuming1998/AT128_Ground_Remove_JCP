@@ -69,10 +69,7 @@ void ProjectionJpc::mapMake()
                 continue;
             }
             row_i = 128 - pt.ring;
-            if(atan2(pt.y, pt.x) >= 0)
-                col_i = ((128.1/2) - atan2(pt.y, pt.x) * RAD) / 0.1;
-            else
-                col_i = (-atan2(pt.y, pt.x) * RAD + (128.1 / 2)) / 0.1;
+            col_i = ((128.1/2) - atan2(pt.y, pt.x) * RAD) / 0.1;
             if(row_i < 0 || row_i >= scan_num)
             {
                 continue;
@@ -82,9 +79,8 @@ void ProjectionJpc::mapMake()
                 continue;
             }
             //范围外的点和nan点对应的range_image为(0,0,0)
-		    range_image.at<cv::Vec3b>(row_i, col_i) = cv::Vec3b(0,255,0);
+	    range_image.at<cv::Vec3b>(row_i, col_i) = cv::Vec3b(0,255,0);
             index = col_i * scan_num + row_i;
-
             radial_index = (int)((range-min_range)/delta_R);//该点所在的环数
             region_index = col_i * radial_num + radial_index;//radial_num为每条轴线总环数
             //区域最小z值列表按照1281条线排序，每条线分为radial_num个线段区间,后续判断每条线上不同线段区间里的最小z值的时候，直接循环即可。
@@ -144,7 +140,6 @@ void ProjectionJpc::JPC()
     cv::Mat core = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(5,5));
     cv::dilate(channels[2],channels[2],core);
     cv::merge(channels, range_image);
-    
     queue<Index> pts_need_rejudge;
     for(int row = 0; row < scan_num; ++row)
     {
@@ -186,7 +181,6 @@ void ProjectionJpc::JPC()
 	    p1 = pts_full->points[pt_id];
 	    p2 = pts_full->points[neighbori_id];
 	    diff = sqrt((p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y) + (p1.z - p2.z) * (p1.z - p2.z));
-            
 	    if(diff > th_d)
             {
                 D(i) = 0;
