@@ -27,9 +27,8 @@ void ProjectionJpc::setParams()
     pts_in->clear();
     
     range_image = cv::Mat::zeros(scan_num, horizon_pts_num, CV_8UC3);
-	region_image = cv::Mat::zeros(scan_num, horizon_pts_num, CV_8UC1);
-	
-	fill(pts_full->points.begin(), pts_full->points.end(), nan_pt);
+    region_image = cv::Mat::zeros(scan_num, horizon_pts_num, CV_8UC1);
+    fill(pts_full->points.begin(), pts_full->points.end(), nan_pt);
 }
 
 void ProjectionJpc::memAllocation()
@@ -40,9 +39,9 @@ void ProjectionJpc::memAllocation()
     pts_obstacle.reset(new PointType());
     
     region_minz.assign(radial_num * horizon_pts_num, 100);
-	cloud_index.assign(scan_num * horizon_pts_num, -1);
+    cloud_index.assign(scan_num * horizon_pts_num, -1);
 	
-	neighborIterator.reserve(neighbor_num);
+    neighborIterator.reserve(neighbor_num);
     for(int i = -2; i <= 2; ++i)
     {
         for(int j = -2; j <= 2; ++j)
@@ -50,8 +49,8 @@ void ProjectionJpc::memAllocation()
             neighborIterator.push_back(make_pair(i, j));
         }
     }
+	
     neighborIterator.erase(neighborIterator.begin() + 12);
-    
     pts_full->points.resize(scan_num * horizon_pts_num);
 }
 
@@ -89,10 +88,10 @@ void ProjectionJpc::mapMake()
             radial_index = (int)((range-min_range)/delta_R);//该点所在的环数
             region_index = col_i * radial_num + radial_index;//radial_num为每条轴线总环数
             //区域最小z值列表按照1281条线排序，每条线分为radial_num个线段区间,后续判断每条线上不同线段区间里的最小z值的时候，直接循环即可。
-		    region_minz[region_index] = min(region_minz[region_index], pt.z);
-		    region_image.at<uchar>(row_i, col_i) = radial_index;//region_中存储该点所在环数
-		    cloud_index[index] = index;//范围外和nan点的cloud_index为-1     
-		    pts_full->points[index] = pt;     
+	    region_minz[region_index] = min(region_minz[region_index], pt.z);
+	    region_image.at<uchar>(row_i, col_i) = radial_index;//region_中存储该点所在环数
+	    cloud_index[index] = index;//范围外和nan点的cloud_index为-1     
+	    pts_full->points[index] = pt;     
          }      
     }
     //cv::namedWindow("map",CV_WINDOW_NORMAL);
@@ -168,26 +167,27 @@ void ProjectionJpc::JPC()
         
         Eigen::VectorXf D(24);
         int pt_id = pt_judge.x * scan_num + pt_judge.y; //pt_judge.x = col、 pt_judge.y = row
-		int mask[24];
-		float sumD(0), diff(0);
-		Point p1, p2;
-		for(int i = 0; i < 24; ++i)
-		{
-		    int neighbor_xi = neighborIterator[i].first + pt_judge.x;  //col
-		    int neighbor_yi = neighborIterator[i].second + pt_judge.y; //row
-		    int neighbori_id = neighbor_xi * scan_num + neighbor_yi;
-		    
-		    if(neighbor_xi < 0 || neighbor_xi >= horizon_pts_num || neighbor_yi < 0 || neighbor_yi >= scan_num || cloud_index[neighbori_id] == -1)
-		    {
-		        D(i) == 0;
-		        sumD += D(i);
-		        mask[i] = -1;
-		        continue;
-		    }
-		    p1 = pts_full->points[pt_id];
-		    p2 = pts_full->points[neighbori_id];
-		    diff = sqrt((p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y) + (p1.z - p2.z) * (p1.z - p2.z));
-            if(diff > th_d)
+	int mask[24];
+	float sumD(0), diff(0);
+	Point p1, p2;
+	for(int i = 0; i < 24; ++i)
+	{
+	    int neighbor_xi = neighborIterator[i].first + pt_judge.x;  //col
+	    int neighbor_yi = neighborIterator[i].second + pt_judge.y; //row
+	    int neighbori_id = neighbor_xi * scan_num + neighbor_yi;
+	    
+	    if(neighbor_xi < 0 || neighbor_xi >= horizon_pts_num || neighbor_yi < 0 || neighbor_yi >= scan_num || cloud_index[neighbori_id] == -1)
+            {
+	        D(i) == 0;
+	        sumD += D(i);
+	        mask[i] = -1;
+	        continue;
+	    }
+	    p1 = pts_full->points[pt_id];
+	    p2 = pts_full->points[neighbori_id];
+	    diff = sqrt((p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y) + (p1.z - p2.z) * (p1.z - p2.z));
+            
+	    if(diff > th_d)
             {
                 D(i) = 0;
                 sumD += D(i);
@@ -197,41 +197,41 @@ void ProjectionJpc::JPC()
                 D(i) = exp(-s * diff);
                 sumD += D(i);
             }
-			if(range_image.at<cv::Vec3b>(neighbor_yi, neighbor_xi) == cv::Vec3b(255,0,0)) //range内低置信度的点
-			{
-				mask[i] = 2;
-			}
-			else if(range_image.at<cv::Vec3b>(neighbor_yi, neighbor_xi) == cv::Vec3b(0,255,0)) //接地点
-			{
-				mask[i] = 1;
-			}
-			else if(range_image.at<cv::Vec3b>(neighbor_yi, neighbor_xi) == cv::Vec3b(0,0,255))  //障碍点和range之外的低置信度的点
-			{
-				mask[i] = 0;
-			}
-		}
-		Eigen::VectorXf W(24);
-		W = D / sumD;
-		float score_r(0), score_g(0);
-		for(int i=0; i<D.size(); ++i)
-		{
-			if(mask[i] == 0)
-			{
-				score_r += W(i);
-			}
-			else if(mask[i] == 1)
-			{
-				score_g += W(i);
-			}
-		}
-		if(score_r > score_g)
-		{
-			range_image.at<cv::Vec3b>(pt_judge.y, pt_judge.x) = cv::Vec3b(0,0,255);
-		}
-		else
-		{
-			range_image.at<cv::Vec3b>(pt_judge.y, pt_judge.x) = cv::Vec3b(0,255,0);
-		}
+	    if(range_image.at<cv::Vec3b>(neighbor_yi, neighbor_xi) == cv::Vec3b(255,0,0)) //range内低置信度的点
+	    {
+		mask[i] = 2;
+	    }
+	    else if(range_image.at<cv::Vec3b>(neighbor_yi, neighbor_xi) == cv::Vec3b(0,255,0)) //接地点
+            {
+		mask[i] = 1;
+	    }
+	    else if(range_image.at<cv::Vec3b>(neighbor_yi, neighbor_xi) == cv::Vec3b(0,0,255))  //障碍点和range之外的低置信度的点
+    	    {
+		mask[i] = 0;
+    	    }
+	}
+	Eigen::VectorXf W(24);
+	W = D / sumD;
+	float score_r(0), score_g(0);
+	for(int i=0; i<D.size(); ++i)
+	{
+	    if(mask[i] == 0)
+	    {
+	        score_r += W(i);
+	    }
+	    else if(mask[i] == 1)
+	    {
+	        score_g += W(i);
+	    }
+	}
+	if(score_r > score_g)
+	{
+	    range_image.at<cv::Vec3b>(pt_judge.y, pt_judge.x) = cv::Vec3b(0,0,255);
+	}
+	else
+	{
+	    range_image.at<cv::Vec3b>(pt_judge.y, pt_judge.x) = cv::Vec3b(0,255,0);
+	}
     }
 }
 
@@ -327,7 +327,7 @@ void ProjectionJpc::runProject(const sensor_msgs::PointCloud2ConstPtr& pts_msg)
 
 int main (int argc, char **argv)
 {
-	ros::init (argc, argv, "at128_jpc");
+    ros::init (argc, argv, "at128_jpc");
     ProjectionJpc AT128;
     ros::spin();
     return 0;
